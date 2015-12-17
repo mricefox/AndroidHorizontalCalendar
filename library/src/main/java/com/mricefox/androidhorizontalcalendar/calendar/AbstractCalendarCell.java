@@ -1,49 +1,62 @@
 package com.mricefox.androidhorizontalcalendar.calendar;
 
+import android.graphics.Color;
+
 /**
  * Author:zengzifeng email:zeng163mail@163.com
  * Description:
  * Date:2015/11/26
  */
-abstract class AbstractCalendarCell implements CalendarCell {
+public abstract class AbstractCalendarCell {
+    public static int DEFAULT_DATE_TEXT_COLOR = Color.BLACK;
+
     protected long dateMillis;
+    protected int dateTextNormalColor = DEFAULT_DATE_TEXT_COLOR;
 
     public AbstractCalendarCell(long dateMillis) {
         this.dateMillis = dateMillis;
     }
 
-    @Override
     public String getHeaderText() {
         return null;
     }
 
-    @Override
     public String getFooterText() {
         return null;
     }
 
-    @Override
     public long getDateMillis() {
         return dateMillis;
     }
 
-    @Override
     public int getDateTextNormalColor() {
-        return 0;
+        return dateTextNormalColor;
     }
 
-    @Override
+    public void setDateTextNormalColor(int dateTextNormalColor) {
+        this.dateTextNormalColor = dateTextNormalColor;
+    }
+
     public int getDateTextHighlightColor() {
         return 0;
     }
 
-    @Override
     public int getHeaderTextColor() {
         return 0;
     }
 
-    @Override
     public int getFooterTextColor() {
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof AbstractCalendarCell) {
+            return ((AbstractCalendarCell) o).dateMillis == dateMillis;
+        } else
+            return false;
     }
 }

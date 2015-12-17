@@ -9,17 +9,22 @@ import java.util.List;
  */
 public class CalendarViewAdapter extends AbstractCalendarViewAdapter {
     @Override
-    long getMinDateMillis() {
-        return 0;
+    protected long getMinDateMillis() {
+        return super.getMinDateMillis();
     }
 
     @Override
-    long getMaxDateMillis() {
-        return 0;
+    protected long getMaxDateMillis() {
+        return super.getMaxDateMillis();
     }
 
     @Override
-    List<CalendarCell> getDataSource() {
+    protected List<CalendarCell> getDataSource() {
         return null;
+    }
+
+    @Override
+    protected int getFirstDayOfWeek() {
+        return super.getFirstDayOfWeek();
     }
 }

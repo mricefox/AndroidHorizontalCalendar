@@ -49,4 +49,9 @@ public class CalendarUtil {
         }
         return -1;
     }
+
+    public static int getOffsetFirstDayOfWeek(int firstDayOfWeek, int weekDay) {
+        int offset = weekDay - firstDayOfWeek;
+        return offset > 0 ? offset : 7 + offset;
+    }
 }

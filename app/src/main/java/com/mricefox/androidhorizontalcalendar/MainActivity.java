@@ -1,5 +1,6 @@
 package com.mricefox.androidhorizontalcalendar;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -8,13 +9,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CalendarView;
 
-import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarViewAdapter;
 import com.mricefox.androidhorizontalcalendar.calendar.HorizontalCalendarView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -67,24 +67,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private CalendarViewAdapter calendarViewAdapter = new CalendarViewAdapter() {
-        @Override
-        public long getMinDateMillis() {
-            return CalendarUtil.convertDateStr2Millis("2015-05-10");
-        }
-
-        @Override
-        public long getMaxDateMillis() {
-            return CalendarUtil.convertDateStr2Millis("2015-12-21");
-        }
+//        @Override
+//        public long getMinDateMillis() {
+//            return CalendarUtil.convertDateStr2Millis("2015-05-10");
+//        }
+//
+//        @Override
+//        public long getMaxDateMillis() {
+//            return CalendarUtil.convertDateStr2Millis("2015-12-21");
+//        }
 
         @Override
         public List<CalendarCell> getDataSource() {
-            return null;
-        }
-
-        @Override
-        public int getFirstDayOfWeek() {
-            return 0;
+            List<CalendarCell> cells = new ArrayList<>();
+            for (long i = 0; i < 300; ++i) {
+                CalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000 * i);
+                cell.setDateTextNormalColor(Color.RED);
+                cells.add(cell);
+            }
+            return cells;
         }
     };
 }

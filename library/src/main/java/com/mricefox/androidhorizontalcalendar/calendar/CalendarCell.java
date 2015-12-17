@@ -5,18 +5,8 @@ package com.mricefox.androidhorizontalcalendar.calendar;
  * Description:
  * Date:2015/11/26
  */
-public interface CalendarCell {
-    String getHeaderText();
-
-    String getFooterText();
-
-    long getDateMillis();
-
-    int getDateTextNormalColor();
-
-    int getDateTextHighlightColor();
-
-    int getHeaderTextColor();
-
-    int getFooterTextColor();
+public class CalendarCell extends AbstractCalendarCell {
+    public CalendarCell(long dateMillis) {
+        super(dateMillis);
+    }
 }

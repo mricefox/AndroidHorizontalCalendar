@@ -87,6 +87,7 @@ public class MFLog {
         if (DEBUG) {
             getMethodNames(new Throwable().getStackTrace());
             Log.d(TAG, createLog(logContent));
+//            System.out.println(createLog(logContent));
         }
     }
 }

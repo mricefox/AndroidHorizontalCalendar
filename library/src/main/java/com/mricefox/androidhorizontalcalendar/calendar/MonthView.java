@@ -1,10 +1,13 @@
 package com.mricefox.androidhorizontalcalendar.calendar;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
+import android.os.Build;
+import android.util.AttributeSet;
 import android.view.View;
 
 import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
@@ -20,63 +23,112 @@ import java.util.List;
  * Date:2015/11/26
  */
 class MonthView extends View {
-    private final static int ROW_NUM = 6;
-    private final static int DAYS_PER_WEEK = 7;
+    private final static int ROW_NUM = 0x6;
+    private final static int DAYS_PER_WEEK = 0x7;
     private static final long MILLIS_IN_DAY = 86400000L;
 
     private List<CalendarCell> internalCellList;
     private int firstDayOfWeek;
+    private long firstDayMillis, lastDayMillis;
+    private long monthFirstDayMillis, monthLastDayMillis;
+
     private Paint drawDatePaint;
     private int vWidth, vHeight;
 
     public MonthView(Context context) {
         super(context);
-
         initializePaints();
     }
 
-//    public MonthView(Context context, AttributeSet attrs) {
-//        super(context, attrs);
-//    }
-//
-//    public MonthView(Context context, AttributeSet attrs, int defStyleAttr) {
-//        super(context, attrs, defStyleAttr);
-//    }
-//
-//    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-//    public MonthView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-//        super(context, attrs, defStyleAttr, defStyleRes);
-//    }
+    public MonthView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        initializePaints();
+    }
+
+    //
+    public MonthView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        initializePaints();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public MonthView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+        super(context, attrs, defStyleAttr, defStyleRes);
+        initializePaints();
+    }
 
 //    void setCalendarCellList(List<CalendarCell> calendarCellList) {
 //        this.calendarCellList = calendarCellList;
 //    }
 
-    void initData(Calendar monthCal, List<CalendarCell> calendarData, int firstDayOfWeek) {
+    void initData(Calendar monthCal, List<CalendarCell> sourceData, int firstDayOfWeek) {
         Calendar firstDayOfMonth = (Calendar) monthCal.clone();
         firstDayOfMonth.set(Calendar.DAY_OF_MONTH, 1);
         final int f_weekDay = firstDayOfMonth.get(Calendar.DAY_OF_WEEK);//the day of first day of the month
-        int headDayNum = 0;//todo other first day of week
-        if (firstDayOfWeek == Calendar.SUNDAY) {
-            headDayNum = f_weekDay - Calendar.SUNDAY;
-        } else if (firstDayOfWeek == Calendar.MONDAY) {
-            headDayNum = f_weekDay == Calendar.SUNDAY ? 6 : f_weekDay - Calendar.MONDAY;
-        }
-        Calendar firstDay = Calendar.getInstance();
-        Calendar lastDay = Calendar.getInstance();
-        firstDay.setTimeInMillis(firstDayOfMonth.getTimeInMillis() - headDayNum * MILLIS_IN_DAY);
-        lastDay.setTimeInMillis(firstDay.getTimeInMillis() + (ROW_NUM * DAYS_PER_WEEK - 1) * MILLIS_IN_DAY);
+        int headDayNum = CalendarUtil.getOffsetFirstDayOfWeek(firstDayOfWeek, f_weekDay);
+        monthFirstDayMillis = firstDayOfMonth.getTimeInMillis();
+        firstDayMillis = monthFirstDayMillis - headDayNum * MILLIS_IN_DAY;
+        lastDayMillis = monthFirstDayMillis + (ROW_NUM * DAYS_PER_WEEK - 1) * MILLIS_IN_DAY;
 
-        internalCellList = new ArrayList<>();
-        for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
-            CalendarCell cell = new BaseCell(firstDay.getTimeInMillis() + i * MILLIS_IN_DAY);
-            internalCellList.add(cell);
+        Calendar lastDayOfMonth = (Calendar) monthCal.clone();
+        lastDayOfMonth.set(Calendar.DAY_OF_MONTH, lastDayOfMonth.getActualMaximum(Calendar.DAY_OF_MONTH));
+        monthLastDayMillis = lastDayOfMonth.getTimeInMillis();
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(cell.getDateMillis());
-            MFLog.d(CalendarUtil.calendar2Str(calendar));
-        }
+        internalCellList = getMonthData(sourceData);
     }
+
+//    /**
+//     * get specified month data from total data, including the extra week day that is not in the month
+//     *
+//     * @param
+//     * @return
+//     */
+//    private List<CalendarCell> getMonthData(List<CalendarCell> sourceData) {
+//        long startTime = System.currentTimeMillis();
+//        long time = 0;
+//        if (sourceData != null && sourceData.get(0) != null)
+//            time = sourceData.get(0).getDateMillis();
+//        int offset = (int) ((firstDayMillis - time) / MILLIS_IN_DAY);
+//        List<CalendarCell> target = new ArrayList();
+//
+//        for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
+//            CalendarCell source = sourceData == null ? null : sourceData.get(i + offset);
+//            if (source == null) {//if data source invalid
+//                CalendarCell cell = new CalendarCell(firstDayMillis + i * MILLIS_IN_DAY);
+//                MFLog.d("add cell color:" + cell.getDateTextNormalColor());
+//                target.add(cell);
+//            } else {
+//                MFLog.d("add source color:" + source.getDateTextNormalColor());
+//                target.add(source);
+//            }
+//        }
+//        MFLog.d("getMonthData time:" + (System.currentTimeMillis() - startTime));
+//        return target;
+//    }
+
+    /**
+     * get specified month data from total data, including the extra week day that is not in the month
+     *
+     * @param
+     * @return
+     */
+    private List<CalendarCell> getMonthData(List<CalendarCell> sourceData) {
+        //todo Traverse sourceData twice, see use Collections.binarySearch()
+        List<CalendarCell> monthData = new ArrayList();
+        for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
+            CalendarCell cell = new CalendarCell(firstDayMillis + i * MILLIS_IN_DAY);
+            if (sourceData != null && sourceData.contains(cell)) {
+                int index = sourceData.indexOf(cell);
+                monthData.add(sourceData.get(index));
+                MFLog.d("add sourceData");
+            } else {
+                MFLog.d("add cell");
+                monthData.add(cell);
+            }
+        }
+        return monthData;
+    }
+
 
     private void initializePaints() {
         drawDatePaint = new Paint();
@@ -118,9 +170,10 @@ class MonthView extends View {
                 CalendarCell cell = internalCellList.get(i * DAYS_PER_WEEK + j);
                 calendar.setTimeInMillis(cell.getDateMillis());
                 String dateTxt = String.valueOf((calendar.get(Calendar.DAY_OF_MONTH)));
-                canvas.drawText(dateTxt, p.x * j + p.x / 2, p.y * i + p.y / 2, drawDatePaint);
 
-                MFLog.d("i=" + i + " j=" + j);
+                drawDatePaint.setColor(cell.getDateTextNormalColor());
+                canvas.drawText(dateTxt, p.x * j + p.x / 2, p.y * i + p.y / 2, drawDatePaint);
+//                MFLog.d("i=" + i + " j=" + j);
             }
         }
     }
@@ -128,12 +181,4 @@ class MonthView extends View {
     private void drawCell(Canvas canvas) {
 
     }
-
-    private class BaseCell extends AbstractCalendarCell {
-
-        public BaseCell(long dateMillis) {
-            super(dateMillis);
-        }
-    }
-
 }

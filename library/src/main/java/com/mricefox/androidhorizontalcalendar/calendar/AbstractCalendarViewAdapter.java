@@ -15,12 +15,12 @@ public abstract class AbstractCalendarViewAdapter {
     /**
      * The default minimal date.
      */
-    protected static final String DEFAULT_MIN_DATE = "01/01/1900";
+    protected static final String DEFAULT_MIN_DATE = "1900-01-01";
 
     /**
      * The default maximal date.
      */
-    protected static final String DEFAULT_MAX_DATE = "01/01/2100";
+    protected static final String DEFAULT_MAX_DATE = "2100-01-01";
 
     protected long getMinDateMillis() {
         return CalendarUtil.convertDateStr2Millis(DEFAULT_MIN_DATE);
@@ -30,7 +30,7 @@ public abstract class AbstractCalendarViewAdapter {
         return CalendarUtil.convertDateStr2Millis(DEFAULT_MAX_DATE);
     }
 
-    abstract List<CalendarCell> getDataSource();
+    protected abstract List<CalendarCell> getDataSource();
 
     protected int getFirstDayOfWeek() {
         return Calendar.getInstance(Locale.getDefault()).getFirstDayOfWeek();

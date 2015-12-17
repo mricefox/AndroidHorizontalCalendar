@@ -10,8 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import com.mricefox.androidhorizontalcalendar.assist.MFLog;
+
 import java.util.Calendar;
-import java.util.List;
 
 /**
  * Author:zengzifeng email:zeng163mail@163.com
@@ -55,7 +56,7 @@ public class HorizontalCalendarView extends LinearLayout {
         }
     }
 
-    // TODO: 2015/11/25  需要获得CalendarViewAdapter的操作不可在此执行
+    // TODO: 2015/11/25  CalendarViewAdapter has not initialized
     private void setupViewPager() {
         if (monthViewPage == null) {
             monthViewPage = new ViewPager(context);
@@ -71,9 +72,10 @@ public class HorizontalCalendarView extends LinearLayout {
         monthPageAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
+                MFLog.d("instantiateItem position:" + position);
                 MonthView monthView = new MonthView(context);
                 Calendar calendar = getCurrentMonth(calendarViewAdapter.getMinDateMillis(), position);
-                monthView.initData(calendar, null, calendarViewAdapter.getFirstDayOfWeek().SUNDAY);
+                monthView.initData(calendar, calendarViewAdapter.getDataSource(), calendarViewAdapter.getFirstDayOfWeek());
                 container.addView(monthView);
                 return monthView;
             }
@@ -132,11 +134,6 @@ public class HorizontalCalendarView extends LinearLayout {
         monthCal.set(Calendar.YEAR, min.get(Calendar.YEAR) + yearOffset);
         monthCal.set(Calendar.MONTH, n > 0 ? n % 12 : position + minMonthOfYear - 1);
         return monthCal;
-    }
-
-    private List<CalendarCell> getMonthData(Calendar month) {
-        // TODO: 2015/11/26
-        return null;
     }
 
     @Override
