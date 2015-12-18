@@ -3,6 +3,7 @@ package com.mricefox.androidhorizontalcalendar.assist;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Author:zengzifeng email:zeng163mail@163.com
@@ -14,13 +15,19 @@ public class CalendarUtil {
     /**
      * SimpleDateFormat with pattern yyyy-MM-dd
      */
-    private static SimpleDateFormat format;
+    private static SimpleDateFormat formatYYYY_MM_DD;
+
+    /**
+     * SimpleDateFormat with pattern yyyyMMdd
+     */
+    private static SimpleDateFormat formatYYYYMMDD;
 
     private CalendarUtil() {
     }
 
     static {
-        format = new SimpleDateFormat("yyyy-MM-dd");
+        formatYYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
+        formatYYYYMMDD = new SimpleDateFormat("yyyyMMdd");
     }
 
     /**
@@ -30,7 +37,7 @@ public class CalendarUtil {
      * @return
      */
     public static String calendar2Str(Calendar calendar) {
-        return format.format(calendar.getTime());
+        return formatYYYY_MM_DD.format(calendar.getTime());
     }
 
     /**
@@ -43,7 +50,7 @@ public class CalendarUtil {
         if (date == null || date.trim().length() == 0)
             return -1;
         try {
-            return format.parse(date).getTime();
+            return formatYYYY_MM_DD.parse(date).getTime();
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -53,5 +60,56 @@ public class CalendarUtil {
     public static int getOffsetFirstDayOfWeek(int firstDayOfWeek, int weekDay) {
         int offset = weekDay - firstDayOfWeek;
         return offset > 0 ? offset : 7 + offset;
+    }
+
+    /**
+     * get a "clean" calendar as 1900-01-01 00:00:00
+     *
+     * @return
+     */
+    public static Calendar getCleanCalendar() {
+        long time = convertDateStr2Millis("1900-01-01");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(time);
+        return calendar;
+    }
+
+    /**
+     * if two date is the same day, for example ,1999-11-21 00:00:00 and  1999-11-21 23:15:40 are in same day,
+     * but 1999-11-21 00:00:00 and 2010-11-21 00:00:00 are not
+     *
+     * @param ltime
+     * @param rtime
+     * @return
+     */
+    public static boolean sameDay(long ltime, long rtime) {
+        Calendar lcal = Calendar.getInstance();
+        Calendar rcal = Calendar.getInstance();
+        lcal.setTimeInMillis(ltime);
+        rcal.setTimeInMillis(rtime);
+
+        String ldate = calendar2Str(lcal);//yyyy-MM-dd
+        String rdate = calendar2Str(rcal);
+        return ldate.equals(rdate);
+    }
+
+    /**
+     * compare two time by date ,ignore HH:mm:ss
+     *
+     * @param ltime
+     * @param rtime
+     * @return
+     */
+    public static int compareDay(long ltime, long rtime) {
+        int lValue = Integer.valueOf(formatYYYYMMDD.format(new Date(ltime)));
+        int rValue = Integer.valueOf(formatYYYYMMDD.format(new Date(rtime)));
+
+        if (lValue > rValue) {//ascending by YYYYMMDD
+            return 1;
+        } else if (lValue < rValue) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 }

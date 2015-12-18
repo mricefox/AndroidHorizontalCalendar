@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.mricefox.androidhorizontalcalendar.assist.MFLog;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarViewAdapter;
 import com.mricefox.androidhorizontalcalendar.calendar.HorizontalCalendarView;
@@ -80,8 +81,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public List<CalendarCell> getDataSource() {
             List<CalendarCell> cells = new ArrayList<>();
-            for (long i = 0; i < 300; ++i) {
-                CalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000 * i);
+            for (long i = 0; i < 30; ++i) {//dummy data
+                CalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
+//                MFLog.d("cell m:" + (getMinDateMillis() + 86400000L * i));
                 cell.setDateTextNormalColor(Color.RED);
                 cells.add(cell);
             }

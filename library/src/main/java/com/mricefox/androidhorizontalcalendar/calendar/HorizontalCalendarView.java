@@ -75,6 +75,7 @@ public class HorizontalCalendarView extends LinearLayout {
                 MFLog.d("instantiateItem position:" + position);
                 MonthView monthView = new MonthView(context);
                 Calendar calendar = getCurrentMonth(calendarViewAdapter.getMinDateMillis(), position);
+//                MFLog.d("calendar :" + calendar.getTimeInMillis());
                 monthView.initData(calendar, calendarViewAdapter.getDataSource(), calendarViewAdapter.getFirstDayOfWeek());
                 container.addView(monthView);
                 return monthView;
@@ -128,7 +129,7 @@ public class HorizontalCalendarView extends LinearLayout {
         Calendar min = Calendar.getInstance();
         min.setTimeInMillis(minTimeMillis);
         int minMonthOfYear = min.get(Calendar.MONTH) + 1;
-        Calendar monthCal = Calendar.getInstance();//show month
+        Calendar monthCal = Calendar.getInstance();//show month // TODO: 2015/12/18 clean day
         int n = position + minMonthOfYear - 12;
         int yearOffset = (int) Math.ceil(n / 12.0f);
         monthCal.set(Calendar.YEAR, min.get(Calendar.YEAR) + yearOffset);

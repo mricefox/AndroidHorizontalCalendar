@@ -9,4 +9,9 @@ public class CalendarCell extends AbstractCalendarCell {
     public CalendarCell(long dateMillis) {
         super(dateMillis);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return super.equals(o);
+    }
 }

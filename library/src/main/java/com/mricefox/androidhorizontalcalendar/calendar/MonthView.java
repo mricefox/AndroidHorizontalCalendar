@@ -15,6 +15,8 @@ import com.mricefox.androidhorizontalcalendar.assist.MFLog;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -34,6 +36,28 @@ class MonthView extends View {
 
     private Paint drawDatePaint;
     private int vWidth, vHeight;
+
+    private static Comparator<AbstractCalendarCell> cellComparator = new Comparator<AbstractCalendarCell>() {
+        @Override
+        public int compare(AbstractCalendarCell lhs, AbstractCalendarCell rhs) {
+            if (lhs == null && rhs != null) {//null in tail
+                return 1;
+            } else if (lhs != null && rhs == null) {
+                return -1;
+            } else if (lhs == null && rhs == null) {
+                return 0;
+            } else {
+                return CalendarUtil.compareDay(lhs.dateMillis, rhs.dateMillis);
+//                if (lhs.dateMillis > rhs.dateMillis) {//ascending by dateMillis
+//                    return 1;
+//                } else if (lhs.dateMillis < rhs.dateMillis) {
+//                    return -1;
+//                } else {
+//                    return 0;
+//                }
+            }
+        }
+    };
 
     public MonthView(Context context) {
         super(context);
@@ -65,8 +89,10 @@ class MonthView extends View {
         Calendar firstDayOfMonth = (Calendar) monthCal.clone();
         firstDayOfMonth.set(Calendar.DAY_OF_MONTH, 1);
         final int f_weekDay = firstDayOfMonth.get(Calendar.DAY_OF_WEEK);//the day of first day of the month
-        int headDayNum = CalendarUtil.getOffsetFirstDayOfWeek(firstDayOfWeek, f_weekDay);
+        final int headDayNum = CalendarUtil.getOffsetFirstDayOfWeek(firstDayOfWeek, f_weekDay);
+//        MFLog.d("headDayNum:" + headDayNum);
         monthFirstDayMillis = firstDayOfMonth.getTimeInMillis();
+//        MFLog.d("monthFirstDayMillis:" + monthFirstDayMillis);
         firstDayMillis = monthFirstDayMillis - headDayNum * MILLIS_IN_DAY;
         lastDayMillis = monthFirstDayMillis + (ROW_NUM * DAYS_PER_WEEK - 1) * MILLIS_IN_DAY;
 
@@ -113,16 +139,16 @@ class MonthView extends View {
      * @return
      */
     private List<CalendarCell> getMonthData(List<CalendarCell> sourceData) {
-        //todo Traverse sourceData twice, see use Collections.binarySearch()
         List<CalendarCell> monthData = new ArrayList();
         for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
             CalendarCell cell = new CalendarCell(firstDayMillis + i * MILLIS_IN_DAY);
-            if (sourceData != null && sourceData.contains(cell)) {
-                int index = sourceData.indexOf(cell);
+//            MFLog.d("getMonthData cell m:" + (firstDayMillis + i * MILLIS_IN_DAY));
+            int index = -1;
+            if (sourceData != null && (index = Collections.binarySearch(sourceData, cell, cellComparator)) >= 0) {
                 monthData.add(sourceData.get(index));
-                MFLog.d("add sourceData");
+//                MFLog.d("add sourceData");
             } else {
-                MFLog.d("add cell");
+//                MFLog.d("add cell");
                 monthData.add(cell);
             }
         }

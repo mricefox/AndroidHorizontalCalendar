@@ -2,6 +2,8 @@ package com.mricefox.androidhorizontalcalendar.calendar;
 
 import android.graphics.Color;
 
+import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
+
 /**
  * Author:zengzifeng email:zeng163mail@163.com
  * Description:
@@ -55,7 +57,9 @@ public abstract class AbstractCalendarCell {
             return true;
         }
         if (o instanceof AbstractCalendarCell) {
-            return ((AbstractCalendarCell) o).dateMillis == dateMillis;
+            //same day cells are equal, no need dateMillis accuracy same
+            return CalendarUtil.sameDay(((AbstractCalendarCell) o).dateMillis, dateMillis);
+//            return ((AbstractCalendarCell) o).dateMillis == dateMillis;
         } else
             return false;
     }
