@@ -1,5 +1,7 @@
 package com.mricefox.androidhorizontalcalendar.calendar;
 
+import android.graphics.Color;
+
 import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
 
 import java.util.Calendar;
@@ -22,17 +24,32 @@ public abstract class AbstractCalendarViewAdapter {
      */
     protected static final String DEFAULT_MAX_DATE = "2100-01-01";
 
+    protected static long defaultMinDateMillis = CalendarUtil.convertDateStr2Millis(DEFAULT_MIN_DATE);
+
+    protected static long defaultMaxDateMillis = CalendarUtil.convertDateStr2Millis(DEFAULT_MAX_DATE);
+
+    protected static int defaultFirstDayOfWeek = Calendar.getInstance(Locale.getDefault()).getFirstDayOfWeek();
+
     protected long getMinDateMillis() {
-        return CalendarUtil.convertDateStr2Millis(DEFAULT_MIN_DATE);
+        return defaultMinDateMillis;
     }
 
     protected long getMaxDateMillis() {
-        return CalendarUtil.convertDateStr2Millis(DEFAULT_MAX_DATE);
+        return defaultMaxDateMillis;
     }
 
     protected abstract List<CalendarCell> getDataSource();
 
     protected int getFirstDayOfWeek() {
-        return Calendar.getInstance(Locale.getDefault()).getFirstDayOfWeek();
+        return defaultFirstDayOfWeek;
+    }
+
+    /**
+     * set the normal color of weekend ,caution: this may overlap the color of the data source
+     *
+     * @return
+     */
+    protected int getWeekendColor() {
+        return Color.RED;
     }
 }

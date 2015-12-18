@@ -9,6 +9,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CalendarView;
 
 import com.mricefox.androidhorizontalcalendar.assist.MFLog;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         initCalendarView();
+//        CalendarView
     }
 
     @Override
@@ -84,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
             for (long i = 0; i < 30; ++i) {//dummy data
                 CalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
 //                MFLog.d("cell m:" + (getMinDateMillis() + 86400000L * i));
-                cell.setDateTextNormalColor(Color.RED);
+                cell.setDateTextNormalColor(Color.BLUE);
                 cells.add(cell);
             }
             return cells;

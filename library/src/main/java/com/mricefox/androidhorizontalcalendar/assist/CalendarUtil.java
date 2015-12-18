@@ -112,4 +112,31 @@ public class CalendarUtil {
             return 0;
         }
     }
+
+    /**
+     * get month between minTime and maxTime, including head and tail
+     *
+     * @param minTime
+     * @param maxTime
+     * @return
+     */
+    public static int getMonthNum(long minTime, long maxTime) {
+        Calendar min = Calendar.getInstance();
+        min.setTimeInMillis(minTime);
+        Calendar max = Calendar.getInstance();
+        max.setTimeInMillis(maxTime);
+        if (max.before(min)) {
+            throw new IllegalArgumentException("max date is before min date");
+        }
+        int minMonth = min.get(Calendar.MONTH) + 1;
+        int maxMonth = max.get(Calendar.MONTH) + 1;
+        return (max.get(Calendar.YEAR) - min.get(Calendar.YEAR)) * 12 + maxMonth - minMonth + 1;
+    }
+
+
+    public static int getWeekday(long time) {
+        Calendar min = Calendar.getInstance();
+        min.setTimeInMillis(time);
+        return min.get(Calendar.DAY_OF_WEEK);
+    }
 }
