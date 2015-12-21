@@ -26,7 +26,7 @@ public class CalendarUtil {
     }
 
     static {
-        formatYYYY_MM_DD = new SimpleDateFormat("yyyy-MM-dd");
+        formatYYYY_MM_DD = new SimpleDateFormat(PATTERN_YYYY_MM_DD);
         formatYYYYMMDD = new SimpleDateFormat("yyyyMMdd");
     }
 
@@ -59,7 +59,7 @@ public class CalendarUtil {
 
     public static int getOffsetFirstDayOfWeek(int firstDayOfWeek, int weekDay) {
         int offset = weekDay - firstDayOfWeek;
-        return offset > 0 ? offset : 7 + offset;
+        return offset >= 0 ? offset : 7 + offset;
     }
 
     /**

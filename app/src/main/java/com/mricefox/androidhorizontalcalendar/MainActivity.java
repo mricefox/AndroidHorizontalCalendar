@@ -9,9 +9,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CalendarView;
 
-import com.mricefox.androidhorizontalcalendar.assist.MFLog;
+import com.mricefox.androidhorizontalcalendar.calendar.AbstractCalendarCell;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarViewAdapter;
 import com.mricefox.androidhorizontalcalendar.calendar.HorizontalCalendarView;
@@ -67,6 +66,12 @@ public class MainActivity extends AppCompatActivity {
     private void initCalendarView() {
         calendarView = (HorizontalCalendarView) findViewById(R.id.calendar_view);
         calendarView.setAdapter(calendarViewAdapter);
+        calendarView.setOnDateTapListener(new HorizontalCalendarView.OnDateTapListener() {
+            @Override
+            public void onTap(AbstractCalendarCell cell) {
+
+            }
+        });
     }
 
     private CalendarViewAdapter calendarViewAdapter = new CalendarViewAdapter() {
@@ -81,10 +86,10 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
         @Override
-        public List<CalendarCell> getDataSource() {
-            List<CalendarCell> cells = new ArrayList<>();
+        public List<AbstractCalendarCell> getDataSource() {
+            List<AbstractCalendarCell> cells = new ArrayList<>();
             for (long i = 0; i < 30; ++i) {//dummy data
-                CalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
+                AbstractCalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
 //                MFLog.d("cell m:" + (getMinDateMillis() + 86400000L * i));
                 cell.setDateTextNormalColor(Color.BLUE);
                 cells.add(cell);

@@ -24,6 +24,8 @@ public abstract class AbstractCalendarViewAdapter {
      */
     protected static final String DEFAULT_MAX_DATE = "2100-01-01";
 
+    protected static final int MAX_HIGHLIGHT_NUM = 0x1;
+
     protected static long defaultMinDateMillis = CalendarUtil.convertDateStr2Millis(DEFAULT_MIN_DATE);
 
     protected static long defaultMaxDateMillis = CalendarUtil.convertDateStr2Millis(DEFAULT_MAX_DATE);
@@ -38,7 +40,7 @@ public abstract class AbstractCalendarViewAdapter {
         return defaultMaxDateMillis;
     }
 
-    protected abstract List<CalendarCell> getDataSource();
+    protected abstract List<AbstractCalendarCell> getDataSource();
 
     protected int getFirstDayOfWeek() {
         return defaultFirstDayOfWeek;
@@ -51,5 +53,17 @@ public abstract class AbstractCalendarViewAdapter {
      */
     protected int getWeekendColor() {
         return Color.RED;
+    }
+
+    protected int getRowSepLineColor() {
+        return Color.TRANSPARENT;
+    }
+
+    protected int getHighlightColor() {
+        return Color.BLUE;
+    }
+
+    protected int getMaxHighlightNum() {
+        return MAX_HIGHLIGHT_NUM;
     }
 }

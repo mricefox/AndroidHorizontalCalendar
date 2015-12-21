@@ -1,5 +1,7 @@
 package com.mricefox.androidhorizontalcalendar.calendar;
 
+import android.graphics.Color;
+
 import java.util.List;
 
 /**
@@ -19,12 +21,17 @@ public class CalendarViewAdapter extends AbstractCalendarViewAdapter {
     }
 
     @Override
-    protected List<CalendarCell> getDataSource() {
+    protected List<AbstractCalendarCell> getDataSource() {
         return null;
     }
 
     @Override
     protected int getFirstDayOfWeek() {
         return super.getFirstDayOfWeek();
+    }
+
+    @Override
+    protected int getRowSepLineColor() {
+        return Color.DKGRAY;
     }
 }

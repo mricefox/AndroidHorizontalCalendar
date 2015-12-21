@@ -20,6 +20,7 @@ import com.mricefox.androidhorizontalcalendar.library.R;
 
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Author:zengzifeng email:zeng163mail@163.com
@@ -30,8 +31,8 @@ public class HorizontalCalendarView extends FrameLayout {
     private LinearLayout header;
     private ViewPager monthViewPage;
     private PagerAdapter monthPageAdapter;
-    //    private Context context;
-    private CalendarViewAdapter calendarViewAdapter;
+    private AbstractCalendarViewAdapter calendarViewAdapter;
+    private OnDateTapListener dateTapListener;
 
     /**
      * @see Calendar#SUNDAY
@@ -68,12 +69,26 @@ public class HorizontalCalendarView extends FrameLayout {
 //        monthViewPage = new ViewPager(getContext());
 //    }
 
-    public void setAdapter(CalendarViewAdapter adapter) {
+    public interface OnDateTapListener {
+        void onTap(AbstractCalendarCell cell);
+    }
+
+    public void setOnDateTapListener(OnDateTapListener listener) {
+        this.dateTapListener = listener;
+    }
+
+    public void setAdapter(AbstractCalendarViewAdapter adapter) {
         if (calendarViewAdapter == adapter)
             return;
         calendarViewAdapter = adapter;
         final int monthNum = CalendarUtil.getMonthNum(calendarViewAdapter.getMinDateMillis(),
                 calendarViewAdapter.getMaxDateMillis());
+        final List<AbstractCalendarCell> data = calendarViewAdapter.getDataSource();
+        final int firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
+        final int weekendColor = calendarViewAdapter.getWeekendColor();
+        final int rowSepLineColor = calendarViewAdapter.getRowSepLineColor();
+        final int highlightColor = calendarViewAdapter.getHighlightColor();
+        final int maxhighlightNum = calendarViewAdapter.getMaxHighlightNum();
         monthPageAdapter = new PagerAdapter() {
             @Override
             public Object instantiateItem(ViewGroup container, int position) {
@@ -81,10 +96,10 @@ public class HorizontalCalendarView extends FrameLayout {
                 MonthView monthView = new MonthView(getContext());
                 Calendar calendar = getCurrentMonth(calendarViewAdapter.getMinDateMillis(), position);
 //                firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
-                monthView.initData(
-                        calendar, calendarViewAdapter.getDataSource(),
-                        calendarViewAdapter.getFirstDayOfWeek(), calendarViewAdapter.getWeekendColor());
+                monthView.initData(calendar, data, firstDayOfWeek, weekendColor,
+                        rowSepLineColor, dateTapListener, highlightColor, maxhighlightNum);
                 container.addView(monthView);
+                MFLog.d("addview " + monthView);
                 return monthView;
             }
 
@@ -102,6 +117,7 @@ public class HorizontalCalendarView extends FrameLayout {
             public void destroyItem(ViewGroup container, int position, Object object) {
 //                super.destroyItem(container, position, object);
                 container.removeView((View) object);
+                MFLog.d("destroyItem position:" + position);
             }
         };
         LayoutInflater layoutInflater = (LayoutInflater) getContext()
@@ -122,19 +138,36 @@ public class HorizontalCalendarView extends FrameLayout {
 //            addView(header, 0,
 //                    new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 //        }
+        monthViewPage.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                MFLog.d("onPageSelected pos:" + position);
+                // TODO: 2015/12/21 select the current day of month corresponding previous month highlight date
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
     }
 
-    private boolean viewAlreadyAdded(View v) {
-        int size = getChildCount();
-        boolean exists = false;
-        if (size > 0) {
-            for (int i = 0; i < size; ++i) {
-                View child = getChildAt(i);
-                exists |= child == v;
-            }
-        }
-        return exists;
-    }
+//    private boolean viewAlreadyAdded(View v) {
+//        int size = getChildCount();
+//        boolean exists = false;
+//        if (size > 0) {
+//            for (int i = 0; i < size; ++i) {
+//                View child = getChildAt(i);
+//                exists |= child == v;
+//            }
+//        }
+//        return exists;
+//    }
 
     private void setupHeader(View content) {
         DateFormatSymbols symbols = DateFormatSymbols.getInstance();

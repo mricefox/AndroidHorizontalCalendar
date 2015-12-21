@@ -11,9 +11,12 @@ import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
  */
 public abstract class AbstractCalendarCell {
     public static int DEFAULT_DATE_TEXT_COLOR = Color.BLACK;
+    public static float DEFAULT_DATE_TEXT_SIZE = 50;
 
     protected long dateMillis;
     protected int dateTextNormalColor = DEFAULT_DATE_TEXT_COLOR;
+    protected float dateTextSize = DEFAULT_DATE_TEXT_SIZE;
+    protected int dateHighlightColor = Color.WHITE;
 
     public AbstractCalendarCell(long dateMillis) {
         this.dateMillis = dateMillis;
@@ -39,16 +42,28 @@ public abstract class AbstractCalendarCell {
         this.dateTextNormalColor = dateTextNormalColor;
     }
 
-    public int getDateTextHighlightColor() {
-        return 0;
-    }
-
     public int getHeaderTextColor() {
         return 0;
     }
 
     public int getFooterTextColor() {
         return 0;
+    }
+
+    public float getDateTextSize() {
+        return dateTextSize;
+    }
+
+    public void setDateTextSize(float dateTextSize) {
+        this.dateTextSize = dateTextSize;
+    }
+
+    public int getDateHighlightColor() {
+        return dateHighlightColor;
+    }
+
+    public void setDateHighlightColor(int dateHighlightColor) {
+        this.dateHighlightColor = dateHighlightColor;
     }
 
     @Override
