@@ -2,6 +2,7 @@ package com.mricefox.androidhorizontalcalendar;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -38,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         initCalendarView();
-//        CalendarView
     }
 
     @Override
@@ -72,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                calendarView.scrollToDate(2015, 11, 24);
+            }
+        }, 5000);
     }
 
     private CalendarViewAdapter calendarViewAdapter = new CalendarViewAdapter() {
@@ -88,10 +95,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public List<AbstractCalendarCell> getDataSource() {
             List<AbstractCalendarCell> cells = new ArrayList<>();
-            for (long i = 0; i < 30; ++i) {//dummy data
+            for (long i = 0; i < 37; ++i) {//dummy data
                 AbstractCalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
 //                MFLog.d("cell m:" + (getMinDateMillis() + 86400000L * i));
                 cell.setDateTextNormalColor(Color.BLUE);
+                if (i == 4 || i == 7 || i == 35) {
+                    cell.setAvailableMode(1, 0);
+                }
+
                 cells.add(cell);
             }
             return cells;

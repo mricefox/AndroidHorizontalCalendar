@@ -11,7 +11,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
@@ -27,47 +26,43 @@ import java.util.List;
  * Description:
  * Date:2015/11/25
  */
-public class HorizontalCalendarView extends FrameLayout {
-    private LinearLayout header;
+public class HorizontalCalendarView extends FrameLayout implements MonthView.OnTapOutOfMonthListener {
     private ViewPager monthViewPage;
     private PagerAdapter monthPageAdapter;
     private AbstractCalendarViewAdapter calendarViewAdapter;
     private OnDateTapListener dateTapListener;
+    private long minDateMillis;
 
-    /**
-     * @see Calendar#SUNDAY
-     */
-//    private int firstDayOfWeek;
     public HorizontalCalendarView(Context context) {
         super(context);
-//        init(context);
     }
 
     public HorizontalCalendarView(Context context, AttributeSet attrs) {
         super(context, attrs);
-//        init(context);
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public HorizontalCalendarView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-//        init(context);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public HorizontalCalendarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-//        init(context);
     }
 
-//    private void init(Context context) {
-//        this.context = context;
-//    }
-
-    // TODO: 2015/11/25  CalendarViewAdapter has not initialized
-//    private void setupViewPager() {
-//        monthViewPage = new ViewPager(getContext());
-//    }
+    @Override
+    public void onTapOut(AbstractCalendarCell cell, int tailOrHead) {
+        int current = monthViewPage.getCurrentItem();
+        int total = monthPageAdapter.getCount();
+        if (tailOrHead == MonthView.TAP_BEFORE_HEAD) {
+            if (current > 0)
+                monthViewPage.setCurrentItem(current - 1, true);
+        } else if (tailOrHead == MonthView.TAP_AFTER_TAIL) {
+            if (current < total - 1)
+                monthViewPage.setCurrentItem(current + 1, true);
+        }
+    }
 
     public interface OnDateTapListener {
         void onTap(AbstractCalendarCell cell);
@@ -81,8 +76,12 @@ public class HorizontalCalendarView extends FrameLayout {
         if (calendarViewAdapter == adapter)
             return;
         calendarViewAdapter = adapter;
-        final int monthNum = CalendarUtil.getMonthNum(calendarViewAdapter.getMinDateMillis(),
-                calendarViewAdapter.getMaxDateMillis());
+        final long minDateMillis = calendarViewAdapter.getMinDateMillis();
+
+        this.minDateMillis = minDateMillis;
+
+        final long maxDateMillis = calendarViewAdapter.getMaxDateMillis();
+        final int monthNum = CalendarUtil.getMonthNum(minDateMillis, maxDateMillis);
         final List<AbstractCalendarCell> data = calendarViewAdapter.getDataSource();
         final int firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
         final int weekendColor = calendarViewAdapter.getWeekendColor();
@@ -94,12 +93,11 @@ public class HorizontalCalendarView extends FrameLayout {
             public Object instantiateItem(ViewGroup container, int position) {
                 MFLog.d("instantiateItem position:" + position);
                 MonthView monthView = new MonthView(getContext());
-                Calendar calendar = getCurrentMonth(calendarViewAdapter.getMinDateMillis(), position);
-//                firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
+                Calendar calendar = getMonthByPosition(minDateMillis, position);
                 monthView.initData(calendar, data, firstDayOfWeek, weekendColor,
-                        rowSepLineColor, dateTapListener, highlightColor, maxhighlightNum);
+                        rowSepLineColor, dateTapListener, highlightColor, maxhighlightNum,
+                        HorizontalCalendarView.this);
                 container.addView(monthView);
-                MFLog.d("addview " + monthView);
                 return monthView;
             }
 
@@ -125,19 +123,12 @@ public class HorizontalCalendarView extends FrameLayout {
         View content = layoutInflater.inflate(R.layout.calendar_view, null, false);
         addView(content);
         monthViewPage = (ViewPager) content.findViewById(R.id.month_viewpager);
-//        setupViewPager();
         monthViewPage.setAdapter(monthPageAdapter);
-//        if (!viewAlreadyAdded(monthViewPage)) {
-//            addView(monthViewPage,
-//                    new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-//        }
-        header = (LinearLayout) content.findViewById(R.id.header_view);
+
+//        View header = (LinearLayout) content.findViewById(R.id.header_view);
         setupHeader(content);
-//        if (!viewAlreadyAdded(header)) {
-//            //add above monthViewPage
-//            addView(header, 0,
-//                    new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-//        }
+        final TextView monthTxt = (TextView) content.findViewById(R.id.month_txt);
+
         monthViewPage.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -148,6 +139,10 @@ public class HorizontalCalendarView extends FrameLayout {
             public void onPageSelected(int position) {
                 MFLog.d("onPageSelected pos:" + position);
                 // TODO: 2015/12/21 select the current day of month corresponding previous month highlight date
+
+                Calendar c = getMonthByPosition(minDateMillis, position);
+                String date = CalendarUtil.calendar2Str(c);
+                monthTxt.setText(date.substring(0, date.lastIndexOf("-")));
             }
 
             @Override
@@ -157,18 +152,21 @@ public class HorizontalCalendarView extends FrameLayout {
         });
     }
 
-//    private boolean viewAlreadyAdded(View v) {
-//        int size = getChildCount();
-//        boolean exists = false;
-//        if (size > 0) {
-//            for (int i = 0; i < size; ++i) {
-//                View child = getChildAt(i);
-//                exists |= child == v;
-//            }
-//        }
-//        return exists;
-//    }
+    public void scrollToDate(int year, int monthOfYear, int dayOfMonth) {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.YEAR, year);
+        c.set(Calendar.MONTH, monthOfYear);
+        c.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        // TODO: 2015/12/24  invalid date
+        int pos = getPositionByCalendar(c, minDateMillis);
+        monthViewPage.setCurrentItem(pos, true);
+    }
 
+    /**
+     * setup header to show week day
+     *
+     * @param content
+     */
     private void setupHeader(View content) {
         DateFormatSymbols symbols = DateFormatSymbols.getInstance();
         String[] weekdays = symbols.getShortWeekdays();
@@ -181,13 +179,11 @@ public class HorizontalCalendarView extends FrameLayout {
                 (TextView) content.findViewById(R.id.weekday_6),
                 (TextView) content.findViewById(R.id.weekday_7),
         };
-
         int firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
         int index = 0;
         for (int i = firstDayOfWeek; i <= Calendar.SATURDAY; ++i, ++index) {
             textViewArr[index].setText(weekdays[i]);
         }
-//        MFLog.d("index:" + index);
         if (firstDayOfWeek > Calendar.SUNDAY) {
             for (int i = Calendar.SUNDAY; i <= firstDayOfWeek - 1; ++i, ++index) {
                 textViewArr[index].setText(weekdays[i]);
@@ -195,7 +191,7 @@ public class HorizontalCalendarView extends FrameLayout {
         }
     }
 
-    private Calendar getCurrentMonth(long minTimeMillis, int position) {
+    private Calendar getMonthByPosition(long minTimeMillis, int position) {
         Calendar min = Calendar.getInstance();
         min.setTimeInMillis(minTimeMillis);
         int minMonthOfYear = min.get(Calendar.MONTH) + 1;
@@ -205,6 +201,15 @@ public class HorizontalCalendarView extends FrameLayout {
         monthCal.set(Calendar.YEAR, min.get(Calendar.YEAR) + yearOffset);
         monthCal.set(Calendar.MONTH, n > 0 ? n % 12 : position + minMonthOfYear - 1);
         return monthCal;
+    }
+
+    private int getPositionByCalendar(Calendar calendar, long minTimeMillis) {
+        Calendar min = Calendar.getInstance();
+        min.setTimeInMillis(minTimeMillis);
+        int minMonthOfYear = min.get(Calendar.MONTH) + 1;
+        int monthOfYear = calendar.get(Calendar.MONTH) + 1;
+        int yearOffset = calendar.get(Calendar.YEAR) - min.get(Calendar.YEAR);
+        return yearOffset * 12 + monthOfYear - minMonthOfYear;
     }
 
     @Override

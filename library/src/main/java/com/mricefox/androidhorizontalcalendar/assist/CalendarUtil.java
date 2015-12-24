@@ -83,14 +83,14 @@ public class CalendarUtil {
      * @return
      */
     public static boolean sameDay(long ltime, long rtime) {
-        Calendar lcal = Calendar.getInstance();
-        Calendar rcal = Calendar.getInstance();
-        lcal.setTimeInMillis(ltime);
-        rcal.setTimeInMillis(rtime);
+        Calendar l = Calendar.getInstance();
+        Calendar r = Calendar.getInstance();
+        l.setTimeInMillis(ltime);
+        r.setTimeInMillis(rtime);
 
-        String ldate = calendar2Str(lcal);//yyyy-MM-dd
-        String rdate = calendar2Str(rcal);
-        return ldate.equals(rdate);
+        return l.get(Calendar.YEAR) == r.get(Calendar.YEAR) &&
+                l.get(Calendar.MONTH) == r.get(Calendar.MONTH) &&
+                l.get(Calendar.DAY_OF_MONTH) == r.get(Calendar.DAY_OF_MONTH);
     }
 
     /**

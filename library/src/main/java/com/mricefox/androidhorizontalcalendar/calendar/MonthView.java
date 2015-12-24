@@ -32,6 +32,8 @@ class MonthView extends View {
     private final static int ROW_NUM = 0x6;
     private final static int DAYS_PER_WEEK = 0x7;
     private static final long MILLIS_IN_DAY = 86400000L;
+    public static int TAP_BEFORE_HEAD = 0x1;
+    public static int TAP_AFTER_TAIL = 0x2;
 
     private List<AbstractCalendarCell> internalCellList;
     private long firstDayMillis, lastDayMillis;
@@ -43,14 +45,15 @@ class MonthView extends View {
     private Paint bgPaint;
     private int vWidth, vHeight;
     private Calendar paintCalendar;
-    private PointF paintSize;
-    private RectF paintArea;
+    private PointF cellSize;
+    private RectF cellArea;
 
     private GestureDetector gestureDetector;
     private HorizontalCalendarView.OnDateTapListener dateTapListener;
     private LinkedList<RectF> highlightAreas;
     private int highlightColor;
     private int maxHighlightNum;
+    private OnTapOutOfMonthListener tapOutOfMonthListener;
 
     private static Comparator<AbstractCalendarCell> cellComparator = new Comparator<AbstractCalendarCell>() {
         @Override
@@ -66,6 +69,10 @@ class MonthView extends View {
             }
         }
     };
+
+    public interface OnTapOutOfMonthListener {
+        void onTapOut(AbstractCalendarCell cell, int tailOrHead);
+    }
 
     public MonthView(Context context) {
         super(context);
@@ -90,14 +97,11 @@ class MonthView extends View {
         initialize();
     }
 
-//    void setCalendarCellList(List<CalendarCell> calendarCellList) {
-//        this.calendarCellList = calendarCellList;
-//    }
-
     void initData(Calendar monthCal, List<AbstractCalendarCell> data,
                   int firstDayOfWeek, int weekendColor, int rowSepLineColor,
-                  HorizontalCalendarView.OnDateTapListener listener,
-                  int highlightColor, int maxHighlightNum) {
+                  HorizontalCalendarView.OnDateTapListener dateTapListener,
+                  int highlightColor, int maxHighlightNum,
+                  OnTapOutOfMonthListener tapOutOfMonthListener) {
         MFLog.d(this + "monthview initData");
         Calendar firstDayOfMonth = (Calendar) monthCal.clone();
         firstDayOfMonth.set(Calendar.DAY_OF_MONTH, 1);
@@ -112,19 +116,12 @@ class MonthView extends View {
         monthLastDayMillis = lastDayOfMonth.getTimeInMillis();
         internalCellList = getMonthData(data, weekendColor);
 
-//        Calendar c = Calendar.getInstance();
-//
-//        MFLog.d("-------------");
-//        for (int i = 0; i < internalCellList.size(); ++i) {
-//            c.setTimeInMillis(internalCellList.get(i).getDateMillis());
-//            MFLog.d("internalCellList i:" + CalendarUtil.calendar2Str(c));
-//        }
-//        MFLog.d("-------------");
-
         this.rowSepLineColor = rowSepLineColor;
-        dateTapListener = listener;
+        this.dateTapListener = dateTapListener;
         this.highlightColor = highlightColor;
         this.maxHighlightNum = maxHighlightNum;
+        this.tapOutOfMonthListener = tapOutOfMonthListener;
+
     }
 
     /**
@@ -136,14 +133,32 @@ class MonthView extends View {
     private List<AbstractCalendarCell> getMonthData(List<AbstractCalendarCell> sourceData, int weekendColor) {
         List<AbstractCalendarCell> monthData = new ArrayList();
         for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
-            AbstractCalendarCell cell = new CalendarCell(firstDayMillis + i * MILLIS_IN_DAY);
+            long time = firstDayMillis + i * MILLIS_IN_DAY;
+            AbstractCalendarCell cell = new CalendarCell(time);
+            if (outOfMonth(time) > 0) {
+                //date before the first day of this month or after the last day of month, set unavailable
+                cell.setAvailableMode(0, 1);
+                Calendar c = Calendar.getInstance();
+                c.setTimeInMillis(time);
+            }
             int index = -1;
+            /**
+             * if source contain this day, use source data, ignore the available above
+             */
+            int auto = cell.getAutoAvailable();
             if (sourceData != null &&
                     (index = Collections.binarySearch(sourceData, cell, cellComparator)) >= 0) {
-                cell = sourceData.get(index);
+                /**
+                 *copy date source
+                 */
+                // TODO: 2015/12/24
+                cell = (AbstractCalendarCell) sourceData.get(index).clone();
             }
+            int manual = cell.getManualAvailable();
+            cell.setAvailableMode(auto, manual);
             monthData.add(cell);
 
+            //setup weekend color
             int weekDay = CalendarUtil.getWeekday(cell.getDateMillis());
             if (weekDay == Calendar.SUNDAY || weekDay == Calendar.SATURDAY) {
                 cell.setDateTextNormalColor(weekendColor);
@@ -154,20 +169,17 @@ class MonthView extends View {
 
     private void initialize() {
         paintCalendar = Calendar.getInstance();
-        paintSize = new PointF();
-        paintArea = new RectF();
-//        hightlightAreas = new LinkedList();
+        cellSize = new PointF();
+        cellArea = new RectF();
 
         bgPaint = new Paint();
         bgPaint.setAntiAlias(true);
         bgPaint.setStyle(Paint.Style.FILL);
-//        bgPaint.setColor(highlightColor);
 
         datePaint = new Paint();
         datePaint.setAntiAlias(true);
         datePaint.setStyle(Paint.Style.STROKE);
         datePaint.setTextAlign(Paint.Align.CENTER);
-//        datePaint.setStrokeWidth(10);
 
         linePaint = new Paint();
         linePaint.setAntiAlias(true);
@@ -192,12 +204,11 @@ class MonthView extends View {
         MFLog.d(this + "monthview onSizeChanged h:" + h + " w:" + w);
         vHeight = h;
         vWidth = w;
-        paintSize.set((vWidth + 0f) / DAYS_PER_WEEK, (vHeight + 0f) / ROW_NUM);
+        cellSize.set((vWidth + 0f) / DAYS_PER_WEEK, (vHeight + 0f) / ROW_NUM);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-//        MFLog.d("onTouchEvent x:" + event.getX() + " y:" + event.getY());
         gestureDetector.onTouchEvent(event);
 //        return super.onTouchEvent(event);
         return true;
@@ -222,10 +233,10 @@ class MonthView extends View {
     private void drawDays(Canvas canvas) {
         for (int row = 0; row < ROW_NUM; ++row) {
             for (int column = 0; column < DAYS_PER_WEEK; ++column) {
-                paintArea.set(paintSize.x * column, paintSize.y * row,
-                        paintSize.x * (column + 1), paintSize.y * (row + 1));
+                cellArea.set(cellSize.x * column, cellSize.y * row,
+                        cellSize.x * (column + 1), cellSize.y * (row + 1));
                 AbstractCalendarCell cell = internalCellList.get(row * DAYS_PER_WEEK + column);
-                drawDateCell(canvas, cell, paintArea);
+                drawDateCell(canvas, cell, cellArea);
             }
         }
     }
@@ -246,9 +257,14 @@ class MonthView extends View {
         } else {
             datePaint.setColor(cell.getDateTextNormalColor());
         }
+        if (cell.getAutoAvailable() == 0) {
+            datePaint.setColor(Color.GRAY);
+        }
+        if (cell.getManualAvailable() == 0) {
+            datePaint.setColor(Color.GREEN);
+        }
         datePaint.setTextSize(cell.getDateTextSize());
         float typefaceOffset = -datePaint.ascent() / 2;//recommended height
-//        MFLog.d("typefaceOffset = "+typefaceOffset);
         canvas.drawText(dateTxt, loc.centerX(), loc.centerY() + typefaceOffset, datePaint);
     }
 
@@ -256,7 +272,7 @@ class MonthView extends View {
         float[] linePoints = new float[ROW_NUM * 4];
         for (int row = 0; row < ROW_NUM; ++row) {
             linePoints[row * 4] = 0;
-            linePoints[row * 4 + 3] = linePoints[row * 4 + 1] = paintSize.y * (row + 1);
+            linePoints[row * 4 + 3] = linePoints[row * 4 + 1] = cellSize.y * (row + 1);
             linePoints[row * 4 + 2] = vWidth;
         }
         linePaint.setColor(rowSepLineColor);
@@ -264,17 +280,22 @@ class MonthView extends View {
     }
 
     private void triggerDateTapEvent(MotionEvent e) {
-        int column = (int) Math.ceil(e.getX() / paintSize.x) - 1;
-        int row = (int) Math.ceil(e.getY() / paintSize.y) - 1;
+        int column = (int) Math.ceil(e.getX() / cellSize.x) - 1;
+        int row = (int) Math.ceil(e.getY() / cellSize.y) - 1;
         int index = row * DAYS_PER_WEEK + column;
+        AbstractCalendarCell cell = internalCellList.get(index);
 
+        int state = -1;
+        if ((state = outOfMonth(cell.getDateMillis())) > 0) {
+            if (tapOutOfMonthListener != null) {
+                tapOutOfMonthListener.onTapOut(cell, state);
+            }
+        } else {
+            redrawTapArea(row, column);
+        }
         if (dateTapListener != null) {
             dateTapListener.onTap(internalCellList.get(index));
-            Calendar c = Calendar.getInstance();
-            c.setTimeInMillis(internalCellList.get(index).getDateMillis());
-            MFLog.d("tap date:" + CalendarUtil.calendar2Str(c));
         }
-        redrawTapArea(row, column);
     }
 
     /**
@@ -286,10 +307,10 @@ class MonthView extends View {
     private void redrawTapArea(int row, int column) {
         if (highlightAreas == null)
             highlightAreas = new LinkedList();
-        RectF dirty = new RectF(paintSize.x * column,
-                paintSize.y * row,
-                paintSize.x * (column + 1),
-                paintSize.y * (row + 1));
+        RectF dirty = new RectF(cellSize.x * column,
+                cellSize.y * row,
+                cellSize.x * (column + 1),
+                cellSize.y * (row + 1));
         RectF popRect = null;
         if (highlightAreas.size() >= maxHighlightNum) {
             popRect = highlightAreas.pop();
@@ -300,6 +321,15 @@ class MonthView extends View {
 //            invalidate(popRect);
 //        }
         invalidate();
+    }
+
+    private int outOfMonth(long time) {
+        int ret = -1;
+        if (CalendarUtil.compareDay(time, monthFirstDayMillis) < 0)
+            ret = TAP_BEFORE_HEAD;
+        if (CalendarUtil.compareDay(time, monthLastDayMillis) > 0)
+            ret = TAP_AFTER_TAIL;
+        return ret;
     }
 
     private GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
