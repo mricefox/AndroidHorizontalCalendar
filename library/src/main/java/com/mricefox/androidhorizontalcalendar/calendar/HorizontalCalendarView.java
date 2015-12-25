@@ -3,6 +3,7 @@ package com.mricefox.androidhorizontalcalendar.calendar;
 import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Build;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -10,7 +11,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
@@ -18,6 +18,7 @@ import com.mricefox.androidhorizontalcalendar.assist.MFLog;
 import com.mricefox.androidhorizontalcalendar.library.R;
 
 import java.text.DateFormatSymbols;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -26,33 +27,55 @@ import java.util.List;
  * Description:
  * Date:2015/11/25
  */
-public class HorizontalCalendarView extends FrameLayout implements MonthView.OnTapOutOfMonthListener {
+public class HorizontalCalendarView extends AbsCalendarView implements MonthView.OnTapOutOfMonthListener {
     private ViewPager monthViewPage;
-    private PagerAdapter monthPageAdapter;
-    private AbstractCalendarViewAdapter calendarViewAdapter;
-    private OnDateTapListener dateTapListener;
-    private long minDateMillis;
+    private MonthPagerAdapter monthPageAdapter;
+    private TextView monthTxt;
+
+    private HorizontalObserver mObserver;
 
     public HorizontalCalendarView(Context context) {
         super(context);
+        initialize();
     }
 
     public HorizontalCalendarView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        initialize();
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public HorizontalCalendarView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initialize();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public HorizontalCalendarView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        initialize();
+    }
+
+    private void initialize() {
+        monthCount = CalendarUtil.getMonthNum(minDateMillis, maxDateMillis);
+        mObserver = new HorizontalObserver();
+
+        LayoutInflater layoutInflater = (LayoutInflater) getContext()
+                .getSystemService(Service.LAYOUT_INFLATER_SERVICE);
+        View content = layoutInflater.inflate(R.layout.calendar_view, null, false);
+        addView(content);
+
+        monthViewPage = (ViewPager) content.findViewById(R.id.month_viewpager);
+        monthPageAdapter = new MonthPagerAdapter();
+        monthViewPage.setAdapter(monthPageAdapter);
+        monthViewPage.addOnPageChangeListener(new MonthPageChangeListener());
+
+        setupHeader(content);
+        initMonthTxt(content);
     }
 
     @Override
-    public void onTapOut(AbstractCalendarCell cell, int tailOrHead) {
+    public void onTapOut(CalendarCell cell, int tailOrHead) {
         int current = monthViewPage.getCurrentItem();
         int total = monthPageAdapter.getCount();
         if (tailOrHead == MonthView.TAP_BEFORE_HEAD) {
@@ -64,101 +87,115 @@ public class HorizontalCalendarView extends FrameLayout implements MonthView.OnT
         }
     }
 
-    public interface OnDateTapListener {
-        void onTap(AbstractCalendarCell cell);
-    }
-
-    public void setOnDateTapListener(OnDateTapListener listener) {
-        this.dateTapListener = listener;
-    }
-
-    public void setAdapter(AbstractCalendarViewAdapter adapter) {
-        if (calendarViewAdapter == adapter)
+    @Override
+    public void setAdapter(AbsCalendarViewAdapter adapter) {
+        if (mAdapter == adapter)
             return;
-        calendarViewAdapter = adapter;
-        final long minDateMillis = calendarViewAdapter.getMinDateMillis();
+        if (mAdapter != null && mObserver != null) {
+            mAdapter.unregisterDataSetObserver(mObserver);
+        }
+        mAdapter = adapter;
 
-        this.minDateMillis = minDateMillis;
-
-        final long maxDateMillis = calendarViewAdapter.getMaxDateMillis();
-        final int monthNum = CalendarUtil.getMonthNum(minDateMillis, maxDateMillis);
-        final List<AbstractCalendarCell> data = calendarViewAdapter.getDataSource();
-        final int firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
-        final int weekendColor = calendarViewAdapter.getWeekendColor();
-        final int rowSepLineColor = calendarViewAdapter.getRowSepLineColor();
-        final int highlightColor = calendarViewAdapter.getHighlightColor();
-        final int maxhighlightNum = calendarViewAdapter.getMaxHighlightNum();
-        monthPageAdapter = new PagerAdapter() {
-            @Override
-            public Object instantiateItem(ViewGroup container, int position) {
-                MFLog.d("instantiateItem position:" + position);
-                MonthView monthView = new MonthView(getContext());
-                Calendar calendar = getMonthByPosition(minDateMillis, position);
-                monthView.initData(calendar, data, firstDayOfWeek, weekendColor,
-                        rowSepLineColor, dateTapListener, highlightColor, maxhighlightNum,
-                        HorizontalCalendarView.this);
-                container.addView(monthView);
-                return monthView;
-            }
-
-            @Override
-            public int getCount() {
-                return monthNum;
-            }
-
-            @Override
-            public boolean isViewFromObject(View view, Object object) {
-                return view == object;
-            }
-
-            @Override
-            public void destroyItem(ViewGroup container, int position, Object object) {
-//                super.destroyItem(container, position, object);
-                container.removeView((View) object);
-                MFLog.d("destroyItem position:" + position);
-            }
-        };
-        LayoutInflater layoutInflater = (LayoutInflater) getContext()
-                .getSystemService(Service.LAYOUT_INFLATER_SERVICE);
-        View content = layoutInflater.inflate(R.layout.calendar_view, null, false);
-        addView(content);
-        monthViewPage = (ViewPager) content.findViewById(R.id.month_viewpager);
-        monthViewPage.setAdapter(monthPageAdapter);
-
-//        View header = (LinearLayout) content.findViewById(R.id.header_view);
-        setupHeader(content);
-        final TextView monthTxt = (TextView) content.findViewById(R.id.month_txt);
-
-        monthViewPage.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-                MFLog.d("onPageSelected pos:" + position);
-                // TODO: 2015/12/21 select the current day of month corresponding previous month highlight date
-
-                Calendar c = getMonthByPosition(minDateMillis, position);
-                String date = CalendarUtil.calendar2Str(c);
-                monthTxt.setText(date.substring(0, date.lastIndexOf("-")));
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
+        if (mAdapter != null) {
+            mAdapter.registerDataSetObserver(mObserver);
+        }
+//        monthPageAdapter.notifyDataSetChanged();
     }
 
+    private class HorizontalObserver extends DataSetObserver {
+        @Override
+        public void onChanged() {
+            super.onChanged();
+
+
+        }
+
+        @Override
+        public void onItemRangeChanged(long from, long to) {
+            super.onItemRangeChanged(from, to);
+        }
+    }
+
+    private class MonthPageChangeListener implements ViewPager.OnPageChangeListener {
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            MFLog.d("onPageSelected pos:" + position);
+            // TODO: 2015/12/21 select the current day of month corresponding previous month highlight date
+            Calendar c = getMonthByPosition(minDateMillis, position);
+            String date = CalendarUtil.calendar2Str(c);
+            monthTxt.setText(date.substring(0, date.lastIndexOf("-")));
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+        }
+    }
+
+    private class MonthPagerAdapter extends PagerAdapter {
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+//            return super.instantiateItem(container, position);
+            MonthView monthView = new MonthView(getContext());
+            Calendar calendar = getMonthByPosition(minDateMillis, position);
+            List<CalendarCell> data = mAdapter == null ? null : mAdapter.getDataSource();
+            monthView.initData(calendar, data, firstDayOfWeek, weekendColor,
+                    rowSepLineColor, dateTapListener, highlightColor, maxhighlightNum,
+                    HorizontalCalendarView.this);
+            container.addView(monthView);
+            return monthView;
+        }
+
+        @Override
+        public int getCount() {
+            return monthCount;
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object object) {
+            return view == object;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+//            super.destroyItem(container, position, object);
+//            monthViewPage.clearOnPageChangeListeners();
+            container.removeView((View) object);
+        }
+    }
+
+//    private void dummy(){
+//        mAdapter = new AbsCalendarViewAdapter() {
+//            @Override
+//            protected List<CalendarCell> getDataSource() {
+//                List<CalendarCell> cells = new ArrayList<>();
+//                long start = CalendarUtil.convertDateStr2Millis("1900-01-01");
+//
+//                for (long i = 0; i < 37; ++i) {//dummy data
+//                    CalendarCell cell = new CalendarCell(start + 86400000L * i);
+//                    cell.setDateTextNormalColor(Color.BLUE);
+////            if (i == 4 || i == 7 || i == 35) {
+////                cell.setAvailableMode(1, 0);
+////            }
+//                    cells.add(cell);
+//                }
+//
+//                return cells;
+//            }
+//        };
+//    }
+
+    @Override
     public void scrollToDate(int year, int monthOfYear, int dayOfMonth) {
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.YEAR, year);
-        c.set(Calendar.MONTH, monthOfYear);
-        c.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.YEAR, year);
+        calendar.set(Calendar.MONTH, monthOfYear - 1);
+        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
         // TODO: 2015/12/24  invalid date
-        int pos = getPositionByCalendar(c, minDateMillis);
+        int pos = getPositionByCalendar(calendar, minDateMillis);
         monthViewPage.setCurrentItem(pos, true);
     }
 
@@ -179,7 +216,6 @@ public class HorizontalCalendarView extends FrameLayout implements MonthView.OnT
                 (TextView) content.findViewById(R.id.weekday_6),
                 (TextView) content.findViewById(R.id.weekday_7),
         };
-        int firstDayOfWeek = calendarViewAdapter.getFirstDayOfWeek();
         int index = 0;
         for (int i = firstDayOfWeek; i <= Calendar.SATURDAY; ++i, ++index) {
             textViewArr[index].setText(weekdays[i]);
@@ -191,6 +227,13 @@ public class HorizontalCalendarView extends FrameLayout implements MonthView.OnT
         }
     }
 
+    private void initMonthTxt(View content) {
+        monthTxt = (TextView) content.findViewById(R.id.month_txt);
+        Calendar c = getMonthByPosition(minDateMillis, 0);
+        String date = CalendarUtil.calendar2Str(c);
+        monthTxt.setText(date.substring(0, date.lastIndexOf("-")));//1900-01
+    }
+
     private Calendar getMonthByPosition(long minTimeMillis, int position) {
         Calendar min = Calendar.getInstance();
         min.setTimeInMillis(minTimeMillis);
@@ -199,7 +242,13 @@ public class HorizontalCalendarView extends FrameLayout implements MonthView.OnT
         int n = position + minMonthOfYear - 12;
         int yearOffset = (int) Math.ceil(n / 12.0f);
         monthCal.set(Calendar.YEAR, min.get(Calendar.YEAR) + yearOffset);
-        monthCal.set(Calendar.MONTH, n > 0 ? n % 12 : position + minMonthOfYear - 1);
+        int month;
+        if (n > 0) {
+            month = n % 12 == 0 ? Calendar.DECEMBER : n % 12 - 1;
+        } else {
+            month = position + minMonthOfYear - 1;
+        }
+        monthCal.set(Calendar.MONTH, month);
         return monthCal;
     }
 
@@ -210,15 +259,5 @@ public class HorizontalCalendarView extends FrameLayout implements MonthView.OnT
         int monthOfYear = calendar.get(Calendar.MONTH) + 1;
         int yearOffset = calendar.get(Calendar.YEAR) - min.get(Calendar.YEAR);
         return yearOffset * 12 + monthOfYear - minMonthOfYear;
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        super.onLayout(changed, l, t, r, b);
     }
 }

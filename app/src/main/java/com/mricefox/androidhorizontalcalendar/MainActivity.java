@@ -2,7 +2,6 @@ package com.mricefox.androidhorizontalcalendar;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -11,9 +10,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.mricefox.androidhorizontalcalendar.calendar.AbstractCalendarCell;
+import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
+import com.mricefox.androidhorizontalcalendar.calendar.AbsCalendarViewAdapter;
 import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
-import com.mricefox.androidhorizontalcalendar.calendar.CalendarViewAdapter;
 import com.mricefox.androidhorizontalcalendar.calendar.HorizontalCalendarView;
 
 import java.util.ArrayList;
@@ -21,6 +20,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private HorizontalCalendarView calendarView;
+    private List<CalendarCell> cells;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,46 +65,40 @@ public class MainActivity extends AppCompatActivity {
 
     private void initCalendarView() {
         calendarView = (HorizontalCalendarView) findViewById(R.id.calendar_view);
+        initCells();
         calendarView.setAdapter(calendarViewAdapter);
         calendarView.setOnDateTapListener(new HorizontalCalendarView.OnDateTapListener() {
             @Override
-            public void onTap(AbstractCalendarCell cell) {
+            public void onTap(CalendarCell cell) {
 
             }
         });
 
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                calendarView.scrollToDate(2015, 11, 24);
-            }
-        }, 5000);
+//        new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                calendarView.scrollToDate(2015, 11, 24);
+//            }
+//        }, 5000);
     }
 
-    private CalendarViewAdapter calendarViewAdapter = new CalendarViewAdapter() {
-//        @Override
-//        public long getMinDateMillis() {
-//            return CalendarUtil.convertDateStr2Millis("2015-05-10");
-//        }
-//
-//        @Override
-//        public long getMaxDateMillis() {
-//            return CalendarUtil.convertDateStr2Millis("2015-12-21");
-//        }
+    private void initCells() {
+        cells = new ArrayList<>();
+        long start = CalendarUtil.convertDateStr2Millis("1900-01-01");
 
-        @Override
-        public List<AbstractCalendarCell> getDataSource() {
-            List<AbstractCalendarCell> cells = new ArrayList<>();
-            for (long i = 0; i < 37; ++i) {//dummy data
-                AbstractCalendarCell cell = new CalendarCell(getMinDateMillis() + 86400000L * i);
-//                MFLog.d("cell m:" + (getMinDateMillis() + 86400000L * i));
-                cell.setDateTextNormalColor(Color.BLUE);
-                if (i == 4 || i == 7 || i == 35) {
-                    cell.setAvailableMode(1, 0);
-                }
-
-                cells.add(cell);
+        for (long i = 0; i < 37; ++i) {//dummy data
+            CalendarCell cell = new CalendarCell(start + 86400000L * i);
+            cell.setDateTextNormalColor(Color.BLUE);
+            if (i == 4 || i == 7 || i == 35) {
+                cell.setAvailableMode(1, 0);
             }
+            cells.add(cell);
+        }
+    }
+
+    private AbsCalendarViewAdapter calendarViewAdapter = new AbsCalendarViewAdapter() {
+        @Override
+        public List<CalendarCell> getDataSource() {
             return cells;
         }
     };
