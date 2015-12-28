@@ -12,6 +12,8 @@ import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
 public class CalendarCell implements Cloneable {
     public static final int DEFAULT_DATE_TEXT_COLOR = Color.BLACK;
     public static final float DEFAULT_DATE_TEXT_SIZE = 50;
+    public static final float DEFAULT_FOOTER_TEXT_SIZE = 25;
+    public static final int DEFAULT_FOOTER_TEXT_COLOR = Color.DKGRAY;
     public static final int AVAILABLE_MODE_MASK = 0x1;
     public static final int AVAILABLE_MODE_SHIFT = 1;
 
@@ -20,6 +22,9 @@ public class CalendarCell implements Cloneable {
     protected float dateTextSize = DEFAULT_DATE_TEXT_SIZE;
     protected int dateHighlightColor = Color.WHITE;
     protected int availableMode = 0x3;
+    protected String footerTxt;
+    protected int footerTxtColor = DEFAULT_FOOTER_TEXT_COLOR;
+    protected float footerTxtSize = DEFAULT_FOOTER_TEXT_SIZE;
 
     public CalendarCell(long dateMillis) {
         this.dateMillis = dateMillis;
@@ -31,14 +36,6 @@ public class CalendarCell implements Cloneable {
         dateTextSize = DEFAULT_DATE_TEXT_SIZE;
         dateHighlightColor = Color.WHITE;
         availableMode = 0x3;
-    }
-
-    public String getHeaderText() {
-        return null;
-    }
-
-    public String getFooterText() {
-        return null;
     }
 
     public long getDateMillis() {
@@ -53,12 +50,28 @@ public class CalendarCell implements Cloneable {
         this.dateTextNormalColor = dateTextNormalColor;
     }
 
-    public int getHeaderTextColor() {
-        return 0;
+    public String getFooterTxt() {
+        return footerTxt;
     }
 
-    public int getFooterTextColor() {
-        return 0;
+    public void setFooterTxt(String footerTxt) {
+        this.footerTxt = footerTxt;
+    }
+
+    public int getFooterTxtColor() {
+        return footerTxtColor;
+    }
+
+    public void setFooterTxtColor(int footerTxtColor) {
+        this.footerTxtColor = footerTxtColor;
+    }
+
+    public float getFooterTxtSize() {
+        return footerTxtSize;
+    }
+
+    public void setFooterTxtSize(float footerTxtSize) {
+        this.footerTxtSize = footerTxtSize;
     }
 
     public float getDateTextSize() {

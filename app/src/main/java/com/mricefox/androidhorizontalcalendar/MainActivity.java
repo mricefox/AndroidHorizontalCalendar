@@ -2,6 +2,7 @@ package com.mricefox.androidhorizontalcalendar;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -80,18 +81,21 @@ public class MainActivity extends AppCompatActivity {
 //                calendarView.scrollToDate(2015, 11, 24);
 //            }
 //        }, 5000);
+
+        refreshDelay();
     }
 
     private void initCells() {
         cells = new ArrayList<>();
         long start = CalendarUtil.convertDateStr2Millis("1900-01-01");
 
-        for (long i = 0; i < 37; ++i) {//dummy data
+        for (long i = 0; i < 100; ++i) {//dummy data
             CalendarCell cell = new CalendarCell(start + 86400000L * i);
             cell.setDateTextNormalColor(Color.BLUE);
             if (i == 4 || i == 7 || i == 35) {
                 cell.setAvailableMode(1, 0);
             }
+            cell.setFooterTxt("footer" + i);
             cells.add(cell);
         }
     }
@@ -102,4 +106,20 @@ public class MainActivity extends AppCompatActivity {
             return cells;
         }
     };
+
+    public void refreshDelay() {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0, size = cells.size(); i < size; ++i) {
+                    cells.get(i).setFooterTxt("ff" + i);
+                }
+//                calendarViewAdapter.notifyDataSetChanged();
+                long start = CalendarUtil.convertDateStr2Millis("1900-01-01");
+                long end = CalendarUtil.convertDateStr2Millis("1900-02-01");
+//                calendarViewAdapter.notifyItemRangeChanged(start, end);
+                calendarViewAdapter.notifyDataSetChanged();
+            }
+        }, 5000);
+    }
 }
