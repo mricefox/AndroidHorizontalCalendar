@@ -1,4 +1,4 @@
-package com.mricefox.androidhorizontalcalendar.calendar;
+package com.mricefox.androidhorizontalcalendar.library.calendar;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
-import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
+import com.mricefox.androidhorizontalcalendar.library.assist.CalendarUtil;
 
 import java.util.Calendar;
 import java.util.Locale;
@@ -37,14 +37,13 @@ public abstract class AbsCalendarView<T extends AbsCalendarViewAdapter> extends 
     protected long maxDateMillis = CalendarUtil.convertDateStr2Millis(DEFAULT_MAX_DATE);
     protected int firstDayOfWeek = Calendar.getInstance(Locale.getDefault()).getFirstDayOfWeek();
     protected int weekendColor = Color.RED;
-    protected int rowSepLineColor = Color.BLACK;
+    protected int rowSepLineColor = Color.TRANSPARENT;
     protected int maxhighlightNum = DEFAULT_MAX_HIGHLIGHT_NUM;
     protected int highlightColor = Color.BLUE;
     protected int monthCount;
 
     protected T mAdapter;
     protected OnDateTapListener dateTapListener;
-
 
     public AbsCalendarView(Context context) {
         super(context);
@@ -65,7 +64,11 @@ public abstract class AbsCalendarView<T extends AbsCalendarViewAdapter> extends 
 
     public abstract void setAdapter(T adapter);
 
-    public abstract void scrollToDate(int year, int monthOfYear, int dayOfMonth) throws IllegalArgumentException;
+    public abstract void scrollToMonth(int year, int monthOfYear);
+
+    public abstract void scrollToPrevMonth();
+
+    public abstract void scrollToNextMonth();
 
     public void setOnDateTapListener(OnDateTapListener listener) {
         this.dateTapListener = listener;

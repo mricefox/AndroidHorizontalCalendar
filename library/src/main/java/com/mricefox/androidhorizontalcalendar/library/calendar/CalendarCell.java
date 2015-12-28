@@ -1,8 +1,8 @@
-package com.mricefox.androidhorizontalcalendar.calendar;
+package com.mricefox.androidhorizontalcalendar.library.calendar;
 
 import android.graphics.Color;
 
-import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
+import com.mricefox.androidhorizontalcalendar.library.assist.CalendarUtil;
 
 /**
  * Author:zengzifeng email:zeng163mail@163.com

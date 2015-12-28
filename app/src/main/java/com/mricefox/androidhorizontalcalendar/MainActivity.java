@@ -1,5 +1,6 @@
 package com.mricefox.androidhorizontalcalendar;
 
+import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,18 +11,22 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.DatePicker;
+import android.widget.TextView;
 
-import com.mricefox.androidhorizontalcalendar.assist.CalendarUtil;
-import com.mricefox.androidhorizontalcalendar.calendar.AbsCalendarViewAdapter;
-import com.mricefox.androidhorizontalcalendar.calendar.CalendarCell;
-import com.mricefox.androidhorizontalcalendar.calendar.HorizontalCalendarView;
+import com.mricefox.androidhorizontalcalendar.library.assist.CalendarUtil;
+import com.mricefox.androidhorizontalcalendar.library.calendar.AbsCalendarViewAdapter;
+import com.mricefox.androidhorizontalcalendar.library.calendar.CalendarCell;
+import com.mricefox.androidhorizontalcalendar.library.calendar.HorizontalCalendarView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private HorizontalCalendarView calendarView;
     private List<CalendarCell> cells;
+    private DatePickerDialog datePickerDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,13 +79,14 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-//        new Handler().postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                calendarView.scrollToDate(2015, 11, 24);
-//            }
-//        }, 5000);
+        TextView monthTxt = (TextView) findViewById(R.id.mf_horizontal_calendar_month_txt);
+        monthTxt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar calendar = calendarView.getCurrentMonth();
+                showDateDialog(calendar);
+            }
+        });
 
         refreshDelay();
     }
@@ -121,5 +127,25 @@ public class MainActivity extends AppCompatActivity {
                 calendarViewAdapter.notifyDataSetChanged();
             }
         }, 5000);
+    }
+
+    private void showDateDialog(Calendar calendar) {
+        int year = calendar.get(Calendar.YEAR);
+        int monthOfYear = calendar.get(Calendar.MONTH);
+        int dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH);
+
+        if (datePickerDialog == null) {
+            datePickerDialog = new DatePickerDialog(this, new DateSetListener(), year, monthOfYear, dayOfMonth);
+        } else {
+            datePickerDialog.updateDate(year, monthOfYear, dayOfMonth);
+        }
+        datePickerDialog.show();
+    }
+
+    private class DateSetListener implements DatePickerDialog.OnDateSetListener {
+        @Override
+        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+            calendarView.scrollToMonth(year, monthOfYear);
+        }
     }
 }

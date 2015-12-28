@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="mf_horizontal_calendar_month_txt" type="id" />
+    <item name="mf_horizontal_calendar_prev_btn" type="id" />
+    <item name="mf_horizontal_calendar_next_btn" type="id" />
+    <item name="mf_horizontal_calendar_header" type="id" />
+    <item name="mf_horizontal_calendar_weekday_1" type="id" />
+    <item name="mf_horizontal_calendar_weekday_2" type="id" />
+    <item name="mf_horizontal_calendar_weekday_3" type="id" />
+    <item name="mf_horizontal_calendar_weekday_4" type="id" />
+    <item name="mf_horizontal_calendar_weekday_5" type="id" />
+    <item name="mf_horizontal_calendar_weekday_6" type="id" />
+    <item name="mf_horizontal_calendar_weekday_7" type="id" />
+    <item name="mf_horizontal_calendar_month_viewpager" type="id" />
+</resources>

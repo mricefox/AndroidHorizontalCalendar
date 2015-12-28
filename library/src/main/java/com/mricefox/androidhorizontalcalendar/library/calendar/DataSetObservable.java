@@ -1,4 +1,4 @@
-package com.mricefox.androidhorizontalcalendar.calendar;
+package com.mricefox.androidhorizontalcalendar.library.calendar;
 
 import android.database.Observable;
 

@@ -1,4 +1,4 @@
-package com.mricefox.androidhorizontalcalendar.assist;
+package com.mricefox.androidhorizontalcalendar.library.assist;
 
 import android.text.TextUtils;
 import android.util.Log;
