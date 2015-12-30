@@ -407,7 +407,6 @@ public class HorizontalCalendarView extends AbsCalendarView {
         private RectF cellArea;
 
         private GestureDetector gestureDetector;
-        private HorizontalCalendarView.OnDateTapListener dateTapListener;
         private LinkedList<RectF> highlightAreas;
 
         public MonthView(Context context) {
