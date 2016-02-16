@@ -65,7 +65,7 @@ public class CalendarUtil {
     /**
      * get a "clean" calendar as 1900-01-01 00:00:00
      *
-     * @return
+     * @return a "clean" calendar
      */
     public static Calendar getCleanCalendar() {
         long time = convertDateStr2Millis("1900-01-01");
@@ -132,7 +132,6 @@ public class CalendarUtil {
         int maxMonth = max.get(Calendar.MONTH) + 1;
         return (max.get(Calendar.YEAR) - min.get(Calendar.YEAR)) * 12 + maxMonth - minMonth + 1;
     }
-
 
     public static int getWeekday(long time) {
         Calendar min = Calendar.getInstance();

@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -48,7 +46,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
     private TextView monthTxt;
     private ImageButton prevBtn, nextBtn;
     private HorizontalObserver mObserver;
-    private Deque<Integer> curPageItems;
+    private LinkedList<Integer> alivePages;
     /**
      * auto scroll page when tap out of month
      */
@@ -88,7 +86,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
         View content = layoutInflater.inflate(R.layout.calendar_view, null, false);
         addView(content);
 
-        curPageItems = new LinkedList();//alive positions in viewpager
+        alivePages = new LinkedList();//alive positions in viewpager
         monthViewPage = (ViewPager) content.findViewById(R.id.mf_horizontal_calendar_month_viewpager);
         monthPageAdapter = new MonthPagerAdapter();
         monthViewPage.setAdapter(monthPageAdapter);
@@ -117,44 +115,35 @@ public class HorizontalCalendarView extends AbsCalendarView {
         mAdapter = adapter;
 
         if (mAdapter != null) {
-            if (mObserver == null)
+            if (mObserver == null) {
                 mObserver = new HorizontalObserver();
+            }
             mAdapter.registerDataSetObserver(mObserver);
         }
-//        monthPageAdapter.notifyDataSetChanged();
     }
 
     private class HorizontalObserver extends DataSetObserver {
         @Override
         public void onChanged() {
-            super.onChanged();
-//            monthPageAdapter.notifyDataSetChanged();
-//            MFLog.d("onChanged");
-
-            Iterator<Integer> iterator = curPageItems.iterator();
-            while (iterator.hasNext()) {
-                int i = iterator.next();
-                MonthView v = (MonthView) monthViewPage.getChildAt(i);
-                v.notifyChange();
+            for (int i = alivePages.size() - 1; i >= 0; --i) {
+                MonthView mv = (MonthView) monthViewPage.getChildAt(i);//i indicate the real position of child view
+                mv.notifyChange();
             }
         }
 
         @Override
         public void onItemRangeChanged(long from, long to) {
-            super.onItemRangeChanged(from, to);
-
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(from);
             final int start = getPositionByCalendar(calendar);
             calendar.setTimeInMillis(to);
             final int end = getPositionByCalendar(calendar);
 
-            Iterator<Integer> iterator = curPageItems.iterator();
-            while (iterator.hasNext()) {
-                int i = iterator.next();
-                if (i >= start && i <= end) {
-                    MonthView v = (MonthView) monthViewPage.getChildAt(i);
-                    v.notifyChange();// TODO: 2015/12/28  curPageItems changed during this step
+            for (int i = alivePages.size() - 1; i >= 0; --i) {
+                final int index = alivePages.get(i);
+                if (index >= start && index <= end) {
+                    MonthView mv = (MonthView) monthViewPage.getChildAt(i);//i indicate the real position of child view
+                    mv.notifyChange();
                 }
             }
         }
@@ -167,8 +156,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
 
         @Override
         public void onPageSelected(int position) {
-            MFLog.d("onPageSelected pos:" + position);
-            // TODO: 2015/12/21 select the current day of month corresponding previous month highlight date
+//            MFLog.d("onPageSelected pos:" + position);
             Calendar c = getMonthByPosition(position);
             String date = CalendarUtil.calendar2Str(c);
             monthTxt.setText(date.substring(0, date.lastIndexOf("-")));
@@ -182,16 +170,13 @@ public class HorizontalCalendarView extends AbsCalendarView {
     private class MonthPagerAdapter extends PagerAdapter {
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-//            return super.instantiateItem(container, position);
-            MFLog.d("MonthPagerAdapter init:" + position);
+//            MFLog.d("MonthPagerAdapter init:" + position);
 
-            MonthView monthView = new MonthView(getContext());
             Calendar calendar = getMonthByPosition(position);
-//            List<CalendarCell> data = mAdapter == null ? null : mAdapter.getDataSource();
-            monthView.initData(calendar);
+            MonthView monthView = new MonthView(getContext(), calendar);
             container.addView(monthView);
 
-            curPageItems.offerLast(position);
+            alivePages.offerLast(position);
 
             return monthView;
         }
@@ -208,12 +193,9 @@ public class HorizontalCalendarView extends AbsCalendarView {
 
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
-//            super.destroyItem(container, position, object);
-//            monthViewPage.clearOnPageChangeListeners();
-            MFLog.d("MonthPagerAdapter destroyItem:" + position);
+//            MFLog.d("MonthPagerAdapter destroyItem:" + position);
             container.removeView((View) object);
-
-            curPageItems.remove(position);
+            alivePages.removeFirstOccurrence(position);
         }
 
         @Override
@@ -231,9 +213,8 @@ public class HorizontalCalendarView extends AbsCalendarView {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, monthOfYear);
-//        calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
         if (calendar.getTimeInMillis() < minDateMillis || calendar.getTimeInMillis() > maxDateMillis) {
-            throw new IllegalArgumentException("illegal date");
+            throw new IllegalArgumentException("Illegal date:" + year + "/" + monthOfYear);
         }
         int pos = getPositionByCalendar(calendar);
         if (pos != monthViewPage.getCurrentItem()) {
@@ -306,7 +287,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
         Calendar min = Calendar.getInstance();
         min.setTimeInMillis(minTimeMillis);
         int minMonthOfYear = min.get(Calendar.MONTH) + 1;
-        Calendar monthCal = CalendarUtil.getCleanCalendar();//show month // TODO: 2015/12/18 clean day
+        Calendar monthCal = CalendarUtil.getCleanCalendar();
         int n = position + minMonthOfYear - 12;
         int yearOffset = (int) Math.ceil(n / 12.0f);
         monthCal.set(Calendar.YEAR, min.get(Calendar.YEAR) + yearOffset);
@@ -376,10 +357,6 @@ public class HorizontalCalendarView extends AbsCalendarView {
         }
     };
 
-//    public interface OnTapOutOfMonthListener {
-//        void onTapOut(CalendarCell cell, int tailOrHead);
-//    }
-
     /**
      * Author:zengzifeng email:zeng163mail@163.com
      * Description:
@@ -395,7 +372,6 @@ public class HorizontalCalendarView extends AbsCalendarView {
         private List<CalendarCell> internalCellList;
         private long firstDayMillis, lastDayMillis;
         private long monthFirstDayMillis, monthLastDayMillis;
-//        private Calendar mCalendar;
 
         private Paint datePaint;
         private Paint footerPaint;
@@ -412,28 +388,28 @@ public class HorizontalCalendarView extends AbsCalendarView {
 
         public MonthView(Context context) {
             super(context);
-            initialize();
         }
 
         public MonthView(Context context, AttributeSet attrs) {
             super(context, attrs);
-            initialize();
         }
 
-        //
         public MonthView(Context context, AttributeSet attrs, int defStyleAttr) {
             super(context, attrs, defStyleAttr);
-            initialize();
         }
 
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         public MonthView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
             super(context, attrs, defStyleAttr, defStyleRes);
-            initialize();
         }
 
-        private void initData(Calendar monthCal) {
-//            mCalendar = monthCal;
+        public MonthView(Context context, Calendar calendar) {
+            super(context);
+            initialize();
+            setupData(calendar);
+        }
+
+        private void setupData(Calendar monthCal) {
             Calendar firstDayOfMonth = (Calendar) monthCal.clone();
             firstDayOfMonth.set(Calendar.DAY_OF_MONTH, 1);
             final int f_weekDay = firstDayOfMonth.get(Calendar.DAY_OF_WEEK);//the week day of first day of the month
@@ -456,7 +432,6 @@ public class HorizontalCalendarView extends AbsCalendarView {
          * @return
          */
         private void setupInternalCellList(List<CalendarCell> sourceData) {
-//            MFLog.d("internalCellList.empty = " + internalCellList.isEmpty());
             for (int i = 0; i < ROW_NUM * DAYS_PER_WEEK; ++i) {
                 long time = firstDayMillis + i * MILLIS_IN_DAY;
                 CalendarCell cell = new CalendarCell(time);//generate new cell
@@ -484,7 +459,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
         }
 
         private CalendarCell searchCell(List<CalendarCell> sourceData, CalendarCell key, boolean copy) {
-            int index = -1;
+            int index;
             CalendarCell result = null;
 
             if (sourceData != null &&
@@ -544,7 +519,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
         @Override
         protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
-            MFLog.d(this + "monthview onSizeChanged h:" + h + " w:" + w);
+//            MFLog.d(this + "monthview onSizeChanged h:" + h + " w:" + w);
             vHeight = h;
             vWidth = w;
             cellSize.set((vWidth + 0f) / DAYS_PER_WEEK, (vHeight + 0f) / ROW_NUM);
@@ -674,7 +649,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
                     cellSize.x * (column + 1),
                     cellSize.y * (row + 1));
             RectF popRect = null;
-            if (highlightAreas.size() >= maxhighlightNum) {
+            if (highlightAreas.size() >= maxHighlightNum) {
                 popRect = highlightAreas.pop();
             }
             highlightAreas.add(dirty);
@@ -702,7 +677,7 @@ public class HorizontalCalendarView extends AbsCalendarView {
         private GestureDetector.OnGestureListener gestureListener = new GestureDetector.OnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
-                MFLog.d("gestureListener onDown");
+//                MFLog.d("gestureListener onDown");
                 return true;
             }
 
@@ -713,25 +688,25 @@ public class HorizontalCalendarView extends AbsCalendarView {
 
             @Override
             public boolean onSingleTapUp(MotionEvent e) {
-                MFLog.d("gestureListener onSingleTapUp");
+//                MFLog.d("gestureListener onSingleTapUp");
                 triggerDateTapEvent(e);
                 return true;
             }
 
             @Override
             public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-                MFLog.d("gestureListener onScroll");
+//                MFLog.d("gestureListener onScroll");
                 return true;
             }
 
             @Override
             public void onLongPress(MotionEvent e) {
-                MFLog.d("gestureListener onLongPress");
+//                MFLog.d("gestureListener onLongPress");
             }
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                MFLog.d("gestureListener onFling");
+//                MFLog.d("gestureListener onFling");
                 return true;
             }
         };

@@ -113,18 +113,17 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    public void refreshDelay() {
+    private void refreshDelay() {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
                 for (int i = 0, size = cells.size(); i < size; ++i) {
                     cells.get(i).setFooterTxt("ff" + i);
                 }
-//                calendarViewAdapter.notifyDataSetChanged();
                 long start = CalendarUtil.convertDateStr2Millis("1900-01-01");
                 long end = CalendarUtil.convertDateStr2Millis("1900-02-01");
-//                calendarViewAdapter.notifyItemRangeChanged(start, end);
-                calendarViewAdapter.notifyDataSetChanged();
+                calendarViewAdapter.notifyItemRangeChanged(start, end);
+//                calendarViewAdapter.notifyDataSetChanged();
             }
         }, 5000);
     }

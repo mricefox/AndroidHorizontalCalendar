@@ -18,6 +18,7 @@ public class CalendarCell implements Cloneable {
     public static final int AVAILABLE_MODE_SHIFT = 1;
 
     protected long dateMillis;
+
     protected int dateTextNormalColor = DEFAULT_DATE_TEXT_COLOR;
     protected float dateTextSize = DEFAULT_DATE_TEXT_SIZE;
     protected int dateHighlightColor = Color.WHITE;
@@ -128,7 +129,6 @@ public class CalendarCell implements Cloneable {
         if (o instanceof CalendarCell) {
             //same day cells are equal, no need dateMillis accuracy same
             return CalendarUtil.sameDay(((CalendarCell) o).dateMillis, dateMillis);
-//            return ((CalendarCell) o).dateMillis == dateMillis;
         } else
             return false;
     }

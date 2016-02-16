@@ -38,7 +38,7 @@ public abstract class AbsCalendarView<T extends AbsCalendarViewAdapter> extends 
     protected int firstDayOfWeek = Calendar.getInstance(Locale.getDefault()).getFirstDayOfWeek();
     protected int weekendColor = Color.RED;
     protected int rowSepLineColor = Color.TRANSPARENT;
-    protected int maxhighlightNum = DEFAULT_MAX_HIGHLIGHT_NUM;
+    protected int maxHighlightNum = DEFAULT_MAX_HIGHLIGHT_NUM;
     protected int highlightColor = Color.BLUE;
     protected int monthCount;
 

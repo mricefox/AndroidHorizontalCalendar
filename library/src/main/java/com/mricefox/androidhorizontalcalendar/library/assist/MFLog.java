@@ -10,13 +10,14 @@ import android.util.Log;
  */
 public class MFLog {
     private static boolean DEBUG = true;
-    private static final String TAG = "mf_cal";
+    private static final String TAG = "MFHorzCal";
 
     private static String className;
     private static String methodName;
     private static int lineNumber;
 
-    private MFLog(){}
+    private MFLog() {
+    }
 
     public static void setDebugState(boolean enable) {
         DEBUG = enable;
@@ -87,7 +88,6 @@ public class MFLog {
         if (DEBUG) {
             getMethodNames(new Throwable().getStackTrace());
             Log.d(TAG, createLog(logContent));
-//            System.out.println(createLog(logContent));
         }
     }
 }
